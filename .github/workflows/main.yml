@@ -14,7 +14,7 @@ jobs:
       DOCKER_SERVER: trialcaqi4i.jfrog.io        # JFrog Docker registry
       KUBE_NAMESPACE: default                    # Namespace where you deploy
       MANIFEST_PATH: .k8s/deployment.yaml            # Path to your YAML in repo
-      HOME: /home/ubuntu
+      #HOME: /home/ubuntu
 
     steps:
       - name: Checkout repository
