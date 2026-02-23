@@ -13,7 +13,7 @@ jobs:
     env:
       DOCKER_SERVER: trialcaqi4i.jfrog.io        # JFrog Docker registry
       KUBE_NAMESPACE: default                    # Namespace where you deploy
-      MANIFEST_PATH: .k8s/deploy.yaml            # Path to your YAML in repo
+      MANIFEST_PATH: .k8s/deployment.yaml            # Path to your YAML in repo
 
     steps:
       - name: Checkout repository
