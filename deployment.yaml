@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sip-app-deployment
+  labels:
+    app: sip_calculator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sip_calculator
+  template:
+    metadata:
+      labels:
+        app: sip_calculator
+    spec:
+      containers:
+      - name: sip-app
+        image: trialcaqi4i.jfrog.io/sumitjhingade-docker-local/sip_calculator:latest
+        ports:
+        - containerPort: 5000
+      imagePullSecrets:
+      - name: regcred # This is the name of the secret created in Step 1
