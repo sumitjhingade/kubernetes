@@ -1,0 +1,63 @@
+name: Deploy YAML to Kubernetes from JFrog
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      DOCKER_SERVER: trialcaqi4i.jfrog.io        # JFrog Docker registry
+      KUBE_NAMESPACE: default                    # Namespace where you deploy
+      MANIFEST_PATH: .k8s/deploy.yaml            # Path to your YAML in repo
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Optional: login to JFrog so `kubectl apply` won't fail if
+      # your cluster uses imagePullSecrets that reference these creds.
+      - name: Log in to JFrog Docker registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.DOCKER_SERVER }}
+          username: ${{ secrets.JFROG_USERNAME }}
+          password: ${{ secrets.JFROG_PASSWORD }}
+
+      # Configure kubeconfig from base64-encoded secret
+      - name: Set up kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${KUBECONFIG_B64}" | base64 -d > $HOME/.kube/config
+        env:
+          KUBECONFIG_B64: ${{ secrets.KUBECONFIG_B64 }}
+
+
+
+      # (Optional but recommended) Ensure imagePullSecret exists in cluster
+      - name: Create or update imagePullSecret in cluster
+        run: |
+          kubectl create secret docker-registry regcred \
+            --docker-server=${DOCKER_SERVER} \
+            --docker-username="${JFROG_USERNAME}" \
+            --docker-password="${JFROG_PASSWORD}" \
+            --docker-email="${JFROG_EMAIL}" \
+            --namespace ${KUBE_NAMESPACE} \
+            --dry-run=client -o yaml | kubectl apply -f -
+        env:
+          JFROG_USERNAME: ${{ secrets.JFROG_USERNAME }}
+          JFROG_PASSWORD: ${{ secrets.JFROG_PASSWORD }}
+          JFROG_EMAIL:    ${{ secrets.JFROG_EMAIL }}
+
+      # Deploy your YAML (which references images in JFrog)
+      - name: Apply Kubernetes manifest
+        run: |
+          kubectl apply -n ${KUBE_NAMESPACE} -f ${MANIFEST_PATH}
+
+      - name: Check deployment status
+        run: |
+          kubectl get pods -n ${KUBE_NAMESPACE}
